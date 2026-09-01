@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Here Me</string>
+
+    <string name="bubble_channel_name">Balance bubble</string>
+    <string name="bubble_channel_description">Keeps the floating balance on screen.</string>
+    <string name="bubble_notification_title">Here Me is watching your balance</string>
+
+    <string name="checkin_channel_name">Daily balance check</string>
+    <string name="checkin_channel_description">Asks you once a day whether the tracked balance is still right.</string>
+
+    <string name="undo">Undo</string>
+    <string name="reconcile">Fix</string>
+    <string name="close">Close</string>
+    <string name="stale_hint">Not confirmed recently</string>
+</resources>

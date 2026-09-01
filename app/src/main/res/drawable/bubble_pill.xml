@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Solid colour is a placeholder; OverlayService tints this as the balance falls. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/bubble_surface" />
+    <corners android:radius="22dp" />
+</shape>

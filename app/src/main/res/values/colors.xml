@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bubble_surface">#F2101418</color>
+    <color name="bubble_text">#FFF4F7F9</color>
+    <color name="bubble_text_dim">#FF9AA6AE</color>
+
+    <!-- The pill slides along this range as the balance falls toward the low mark. -->
+    <color name="balance_healthy">#FF3DDC97</color>
+    <color name="balance_low">#FFFF5C5C</color>
+
+    <color name="drain_chip">#FFFF6B6B</color>
+    <color name="gain_chip">#FF3DDC97</color>
+</resources>
