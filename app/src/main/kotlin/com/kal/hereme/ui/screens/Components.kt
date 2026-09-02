@@ -64,7 +64,9 @@ fun LabelledRow(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(modifier = Modifier.padding(end = 12.dp)) {
+        // weight(1f) keeps a long description from crowding the trailing control off the
+        // right edge — without it, a wordy row loses its Grant button / switch entirely.
+        Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
             Text(text = label, style = MaterialTheme.typography.bodyLarge)
             if (description != null) {
                 Text(
