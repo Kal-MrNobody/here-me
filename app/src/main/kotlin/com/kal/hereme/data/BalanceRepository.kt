@@ -48,6 +48,34 @@ class BalanceRepository(
 
     fun recentEntries(limit: Int = 300): Flow<List<LedgerEntryEntity>> = dao.observeRecent(limit)
 
+    fun notificationLog(limit: Int = 150): Flow<List<NotificationLogEntity>> =
+        dao.observeNotificationLog(limit)
+
+    /** Records what the listener saw, for the debug screen; keeps only the most recent 150. */
+    suspend fun logNotification(
+        packageName: String,
+        title: String?,
+        text: String?,
+        bigText: String?,
+        outcome: String,
+        applied: Boolean,
+    ) {
+        dao.insertNotificationLog(
+            NotificationLogEntity(
+                packageName = packageName,
+                title = title,
+                text = text,
+                bigText = bigText,
+                outcome = outcome,
+                applied = applied,
+                createdAt = now(),
+            ),
+        )
+        dao.pruneNotificationLog(keep = 150)
+    }
+
+    suspend fun clearNotificationLog() = dao.clearNotificationLog()
+
     suspend fun currentBalance(): Paise = Paise(dao.totalPaise())
 
     suspend fun isOnboarded(): Boolean = dao.meta() != null

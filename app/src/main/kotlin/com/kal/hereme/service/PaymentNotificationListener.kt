@@ -5,6 +5,7 @@ import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationCompat
 import com.kal.hereme.core.DedupeWindow
 import com.kal.hereme.core.EntryType
+import com.kal.hereme.core.Money
 import com.kal.hereme.core.PaymentParser
 import com.kal.hereme.data.AppSettings
 import com.kal.hereme.hereMe
@@ -64,20 +65,45 @@ class PaymentNotificationListener : NotificationListenerService() {
         val app = applicationContext.hereMe
         val settings: AppSettings = app.settings.settings.first()
 
-        if (packageName !in settings.watchedPackages) return
+        val watched = packageName in settings.watchedPackages
+        val financial = PaymentParser.looksFinancial(title, text, bigText)
 
-        val payment = PaymentParser.parse(packageName, title, text, bigText) ?: return
-        if (payment.confidence < PaymentParser.MIN_CONFIDENCE) return
-        if (!dedupe.accept(notificationKey, payment, System.currentTimeMillis())) return
+        // Ignore everything that is neither from a watched app nor looks like money — most
+        // of what a phone posts. Anything past this point is worth a line in the debug log.
+        if (!watched && !financial) return
 
-        app.repository.record(
-            delta = payment.delta,
-            type = EntryType.AUTO_PAYMENT,
-            counterparty = payment.counterparty,
-            sourcePackage = packageName,
-            rawText = listOfNotNull(title, text, bigText).distinct().joinToString(" · "),
-        )
-        // The bubble is watching the ledger, so recording the entry is all it takes for
-        // the number on screen to start draining.
+        val payment = PaymentParser.parse(packageName, title, text, bigText)
+
+        var applied = false
+        val outcome: String = when {
+            payment == null ->
+                "Seen, but no amount/direction recognised"
+
+            !watched ->
+                "Recognised ${direction(payment.direction)} ${Money.format(payment.amount)} — " +
+                    "but this app isn't watched yet. Tap “Watch this app”."
+
+            !dedupe.accept(notificationKey, payment, System.currentTimeMillis()) ->
+                "Duplicate within 90s — ignored"
+
+            else -> {
+                app.repository.record(
+                    delta = payment.delta,
+                    type = EntryType.AUTO_PAYMENT,
+                    counterparty = payment.counterparty,
+                    sourcePackage = packageName,
+                    rawText = listOfNotNull(title, text, bigText).distinct().joinToString(" · "),
+                )
+                applied = true
+                // The bubble is watching the ledger, so recording the entry is all it takes
+                // for the number on screen to start draining.
+                "Applied ${direction(payment.direction)} ${Money.format(payment.amount)}"
+            }
+        }
+
+        app.repository.logNotification(packageName, title, text, bigText, outcome, applied)
     }
+
+    private fun direction(d: com.kal.hereme.core.Direction): String =
+        if (d == com.kal.hereme.core.Direction.DEBIT) "−" else "+"
 }

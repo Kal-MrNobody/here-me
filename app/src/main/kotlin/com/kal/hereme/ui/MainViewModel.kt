@@ -11,6 +11,7 @@ import com.kal.hereme.data.AppSettings
 import com.kal.hereme.data.BalanceRepository
 import com.kal.hereme.data.BalanceSnapshot
 import com.kal.hereme.data.LedgerEntryEntity
+import com.kal.hereme.data.NotificationLogEntity
 import com.kal.hereme.data.SettingsStore
 import com.kal.hereme.hereMe
 import com.kal.hereme.overlay.OverlayService
@@ -33,6 +34,9 @@ class MainViewModel(
 
     val settings: StateFlow<AppSettings> = settingsStore.settings
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AppSettings())
+
+    val notificationLog: StateFlow<List<NotificationLogEntity>> = repository.notificationLog()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     /** Typed rupees to paise, or null if what they typed isn't a number. */
     fun parseTyped(input: String): Paise? = Money.parseAmount(input.trim().removePrefix("₹").trim())
@@ -89,6 +93,13 @@ class MainViewModel(
     fun setWatchedPackages(packages: Set<String>) = viewModelScope.launch {
         settingsStore.setWatchedPackages(packages)
     }
+
+    /** From the debug screen: start watching whatever app posted a payment notification. */
+    fun watchPackage(packageName: String) = viewModelScope.launch {
+        settingsStore.setWatchedPackages(settings.value.watchedPackages + packageName)
+    }
+
+    fun clearNotificationLog() = viewModelScope.launch { repository.clearNotificationLog() }
 
     companion object {
         fun factory(context: Context): ViewModelProvider.Factory {

@@ -7,8 +7,8 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
 @Database(
-    entities = [LedgerEntryEntity::class, BalanceMetaEntity::class],
-    version = 1,
+    entities = [LedgerEntryEntity::class, BalanceMetaEntity::class, NotificationLogEntity::class],
+    version = 2,
     exportSchema = true,
 )
 @TypeConverters(EntryTypeConverter::class)
@@ -22,6 +22,13 @@ abstract class HereMeDatabase : RoomDatabase() {
                 context.applicationContext,
                 HereMeDatabase::class.java,
                 "here-me.db",
-            ).build()
+            )
+                // The only schema change so far just adds the debug notification_log table.
+                // The ledger is disposable test data at this stage, so rather than risk a
+                // hand-written migration that must match Room's expected schema exactly, we
+                // let a version bump recreate the database. Cost: the opening balance is
+                // re-entered once. Revisit before this app holds anything worth keeping.
+                .fallbackToDestructiveMigration()
+                .build()
     }
 }

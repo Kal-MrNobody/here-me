@@ -51,4 +51,19 @@ interface BalanceDao {
 
     @Query("UPDATE balance_meta SET lastReconciledAt = :at WHERE id = 1")
     suspend fun touchReconciledAt(at: Long)
+
+    @Query("SELECT * FROM notification_log ORDER BY createdAt DESC, id DESC LIMIT :limit")
+    fun observeNotificationLog(limit: Int): Flow<List<NotificationLogEntity>>
+
+    @Insert
+    suspend fun insertNotificationLog(entry: NotificationLogEntity): Long
+
+    @Query("DELETE FROM notification_log")
+    suspend fun clearNotificationLog()
+
+    @Query(
+        "DELETE FROM notification_log WHERE id NOT IN " +
+            "(SELECT id FROM notification_log ORDER BY createdAt DESC, id DESC LIMIT :keep)",
+    )
+    suspend fun pruneNotificationLog(keep: Int)
 }

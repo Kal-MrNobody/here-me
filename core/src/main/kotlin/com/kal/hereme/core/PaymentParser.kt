@@ -44,6 +44,24 @@ object PaymentParser {
 
     const val MIN_CONFIDENCE = 0.6f
 
+    /**
+     * A loose "this notification is about money" test, used only to decide what to surface
+     * on the debug screen. Deliberately broad: it should catch a bank or payment message
+     * from an app we don't yet watch (so it can be discovered), while ignoring ordinary
+     * chatter. Being a false positive here costs nothing — it only means a line in a log.
+     */
+    private val FINANCIAL_HINT = Regex(
+        """(₹|\bRs\.?|\bINR\b|\bdebited\b|\bcredited\b|\bdebit\b|\bcredit\b|\bpaid\b|""" +
+            """\bsent\b|\breceived\b|\bpayment\b|\bUPI\b|\btransferred\b|\bwithdrawn\b)""",
+        RegexOption.IGNORE_CASE,
+    )
+
+    fun looksFinancial(title: String?, text: String?, bigText: String?): Boolean {
+        val blob = listOfNotNull(title, text, bigText).joinToString(" ")
+        if (blob.isBlank()) return false
+        return FINANCIAL_HINT.containsMatchIn(blob)
+    }
+
     /** Never a completed payment, whatever else the text says. */
     private val HARD_REJECT = listOf(
         """\bfailed\b""",

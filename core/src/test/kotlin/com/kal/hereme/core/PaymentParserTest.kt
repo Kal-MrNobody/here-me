@@ -243,4 +243,21 @@ class PaymentParserTest {
         assertEquals(Direction.DEBIT, result!!.direction)
         assertNull(result.counterparty)
     }
+
+    // --- looksFinancial (debug-screen gate) --------------------------------------------
+
+    @Test
+    fun `looksFinancial catches bank and payment wording from any app`() {
+        assertNotNull(PaymentParser.parse(PaymentApps.GPAY, "Google Pay", "You paid ₹112 to Rahul"))
+        assert(PaymentParser.looksFinancial("HDFCBK", "Sent Rs.100.00 From HDFC Bank A/C", null))
+        assert(PaymentParser.looksFinancial("Bank of Baroda", "Account credited with INR 100.00 by UPI.", null))
+        assert(PaymentParser.looksFinancial(null, "₹500 received", null))
+    }
+
+    @Test
+    fun `looksFinancial ignores ordinary chatter and blanks`() {
+        assert(!PaymentParser.looksFinancial("Mom", "are you coming home for dinner", null))
+        assert(!PaymentParser.looksFinancial(null, null, null))
+        assert(!PaymentParser.looksFinancial("", "  ", null))
+    }
 }

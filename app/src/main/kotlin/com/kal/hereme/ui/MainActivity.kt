@@ -10,6 +10,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Settings
@@ -39,6 +40,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kal.hereme.core.Paise
 import com.kal.hereme.ui.screens.AmountDialog
+import com.kal.hereme.ui.screens.DebugScreen
 import com.kal.hereme.ui.screens.HistoryScreen
 import com.kal.hereme.ui.screens.HomeScreen
 import com.kal.hereme.ui.screens.SettingsScreen
@@ -73,7 +75,12 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private enum class Tab(val label: String) { HOME("Balance"), HISTORY("History"), SETTINGS("Settings") }
+private enum class Tab(val label: String) {
+    HOME("Balance"),
+    HISTORY("History"),
+    DEBUG("Debug"),
+    SETTINGS("Settings"),
+}
 
 private enum class Dialog { NONE, RECONCILE, CASH_SPENT, MONEY_IN, LOW_BALANCE, RESET }
 
@@ -86,6 +93,7 @@ private fun HereMeRoot(reconcileRequested: MutableState<Boolean>) {
     val snapshot by viewModel.snapshot.collectAsState()
     val entries by viewModel.entries.collectAsState()
     val settings by viewModel.settings.collectAsState()
+    val notificationLog by viewModel.notificationLog.collectAsState()
 
     var tab by remember { mutableStateOf(Tab.HOME) }
     var dialog by remember { mutableStateOf(Dialog.NONE) }
@@ -141,6 +149,7 @@ private fun HereMeRoot(reconcileRequested: MutableState<Boolean>) {
                                 imageVector = when (entry) {
                                     Tab.HOME -> Icons.Filled.Home
                                     Tab.HISTORY -> Icons.Filled.List
+                                    Tab.DEBUG -> Icons.Filled.BugReport
                                     Tab.SETTINGS -> Icons.Filled.Settings
                                 },
                                 contentDescription = entry.label,
@@ -184,6 +193,14 @@ private fun HereMeRoot(reconcileRequested: MutableState<Boolean>) {
             Tab.HISTORY -> HistoryScreen(
                 entries = entries,
                 onDelete = viewModel::deleteEntry,
+                modifier = Modifier.padding(padding),
+            )
+
+            Tab.DEBUG -> DebugScreen(
+                entries = notificationLog,
+                watchedPackages = settings.watchedPackages,
+                onWatch = viewModel::watchPackage,
+                onClear = viewModel::clearNotificationLog,
                 modifier = Modifier.padding(padding),
             )
 
