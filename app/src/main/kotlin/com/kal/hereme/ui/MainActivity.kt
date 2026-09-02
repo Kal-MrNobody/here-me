@@ -39,6 +39,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kal.hereme.core.Paise
+import com.kal.hereme.overlay.OverlayService
 import com.kal.hereme.ui.screens.AmountDialog
 import com.kal.hereme.ui.screens.DebugScreen
 import com.kal.hereme.ui.screens.HistoryScreen
@@ -124,6 +125,15 @@ private fun HereMeRoot(reconcileRequested: MutableState<Boolean>) {
             dialog = Dialog.RECONCILE
             reconcileRequested.value = false
         }
+    }
+
+    // A reinstall or a process restart leaves bubbleEnabled saved as true but the overlay
+    // service dead — nothing else brings it back except a reboot. Starting it here, while
+    // the activity is in the foreground (so the foreground-service start is allowed), makes
+    // the bubble survive reopening the app, not just rebooting the phone.
+    val shouldRunBubble = settings.bubbleEnabled && permissions.canDrawOverlay
+    LaunchedEffect(shouldRunBubble) {
+        if (shouldRunBubble) OverlayService.start(context)
     }
 
     val current = snapshot

@@ -62,6 +62,9 @@ class OverlayService : LifecycleService() {
     private var undoEntryId: Long? = null
     private var undoJob: Job? = null
 
+    /** Tracks the last visibility decision, so transitions can be logged for debugging. */
+    private var lastVisible: Boolean? = null
+
     override fun onCreate() {
         super.onCreate()
 
@@ -291,14 +294,35 @@ class OverlayService : LifecycleService() {
     private fun updateVisibility() {
         if (!viewAdded) return
 
+        val front = if (settings.onlyOverPaymentApps && Permissions.hasUsageAccess(this)) {
+            ForegroundApp.current(this)
+        } else {
+            null
+        }
         val show = when {
             !settings.onlyOverPaymentApps -> true
             !Permissions.hasUsageAccess(this) -> true
-            else -> ForegroundApp.current(this) in settings.showOverPackages
+            else -> front in settings.showOverPackages
         }
 
         binding.root.visibility = if (show) View.VISIBLE else View.GONE
         if (!show && expanded) setExpanded(false)
+
+        // Log only when visibility flips, so the Debug screen shows what the app thinks is
+        // in front when it decides to show or hide. Infrequent, and the clearest signal we
+        // have for diagnosing "the bubble isn't appearing where I expected".
+        if (lastVisible != show) {
+            lastVisible = show
+            val detail = when {
+                !settings.onlyOverPaymentApps -> "always-on mode"
+                !Permissions.hasUsageAccess(this) -> "no usage access — showing everywhere"
+                else -> "front: ${front ?: "unknown"}"
+            }
+            val message = if (show) "Bubble shown ($detail)" else "Bubble hidden ($detail)"
+            lifecycleScope.launch {
+                repository.logNotification("«bubble»", null, message, null, message, false)
+            }
+        }
     }
 
     private fun applySettings(updated: AppSettings) {
