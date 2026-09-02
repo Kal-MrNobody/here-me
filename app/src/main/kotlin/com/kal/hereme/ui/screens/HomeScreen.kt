@@ -46,11 +46,14 @@ fun HomeScreen(
     onGrantNotificationAccess: () -> Unit,
     onGrantPostNotifications: () -> Unit,
     onIgnoreBatteryOptimisations: () -> Unit,
+    onGrantUsageAccess: () -> Unit,
     onSeeAllHistory: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val now = System.currentTimeMillis()
     val stale = snapshot.isStale(now, settings.stalenessDays)
+    // Usage access is only needed when the bubble is limited to payment apps.
+    val needsUsageAccess = settings.onlyOverPaymentApps && !permissions.hasUsageAccess
 
     LazyColumn(
         modifier = modifier
@@ -95,7 +98,7 @@ fun HomeScreen(
         }
 
         if (!permissions.readyToRun || !permissions.ignoringBatteryOptimizations ||
-            !permissions.canPostNotifications
+            !permissions.canPostNotifications || needsUsageAccess
         ) {
             item {
                 SectionCard(
@@ -129,6 +132,14 @@ fun HomeScreen(
                             label = "Don't optimise battery",
                             description = "Without this the bubble is killed overnight.",
                             onGrant = onIgnoreBatteryOptimisations,
+                        )
+                    }
+                    if (needsUsageAccess) {
+                        PermissionRow(
+                            label = "Usage access",
+                            description = "Lets the bubble appear only while you're in a " +
+                                "payment app, instead of floating all the time.",
+                            onGrant = onGrantUsageAccess,
                         )
                     }
                 }

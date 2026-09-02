@@ -19,6 +19,11 @@
         android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"
         tools:ignore="BatteryLife" />
 
+    <!-- To know which app is in front, so the bubble can appear only over payment apps. -->
+    <uses-permission
+        android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
+
     <application
         android:name=".HereMeApp"
         android:allowBackup="false"

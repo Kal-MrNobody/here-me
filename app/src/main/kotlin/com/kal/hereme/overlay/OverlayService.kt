@@ -25,9 +25,11 @@ import com.kal.hereme.data.SettingsStore
 import com.kal.hereme.databinding.OverlayBubbleBinding
 import com.kal.hereme.hereMe
 import com.kal.hereme.ui.MainActivity
+import com.kal.hereme.ui.Permissions
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 /**
@@ -89,6 +91,9 @@ class OverlayService : LifecycleService() {
         layoutParams = buildLayoutParams()
         wireInteractions()
         addBubble()
+        // Decide visibility before the first paint, so the bubble doesn't flash on screen
+        // for a second when it should be hidden.
+        updateVisibility()
         observeState()
     }
 
@@ -265,6 +270,35 @@ class OverlayService : LifecycleService() {
         lifecycleScope.launch {
             repository.latestEntry.collectLatest { onLatestEntry(it) }
         }
+
+        // The bubble should only sit over the apps the user actually pays from. There is no
+        // callback for "an app came to the foreground" without an AccessibilityService, so
+        // this polls once a second while the service is alive. Cheap, and it stops the
+        // moment the service does.
+        lifecycleScope.launch {
+            while (isActive) {
+                updateVisibility()
+                delay(FOREGROUND_POLL_MILLIS)
+            }
+        }
+    }
+
+    /**
+     * Shows or hides the bubble based on what's in front. Fails open: if the user wants
+     * "only over payment apps" but hasn't granted usage access, we can't tell what's in
+     * front, so the bubble stays visible and the permission card does the nudging.
+     */
+    private fun updateVisibility() {
+        if (!viewAdded) return
+
+        val show = when {
+            !settings.onlyOverPaymentApps -> true
+            !Permissions.hasUsageAccess(this) -> true
+            else -> ForegroundApp.current(this) in settings.showOverPackages
+        }
+
+        binding.root.visibility = if (show) View.VISIBLE else View.GONE
+        if (!show && expanded) setExpanded(false)
     }
 
     private fun applySettings(updated: AppSettings) {
@@ -356,6 +390,7 @@ class OverlayService : LifecycleService() {
         const val ACTION_HIDE = "com.kal.hereme.action.HIDE_BUBBLE"
 
         private const val UNDO_WINDOW_MILLIS = 10_000L
+        private const val FOREGROUND_POLL_MILLIS = 1_000L
 
         fun start(context: Context) {
             val intent = Intent(context, OverlayService::class.java)

@@ -99,6 +99,14 @@ class MainViewModel(
         settingsStore.setWatchedPackages(settings.value.watchedPackages + packageName)
     }
 
+    fun setOnlyOverPaymentApps(only: Boolean) = viewModelScope.launch {
+        settingsStore.setOnlyOverPaymentApps(only)
+    }
+
+    fun setShowOverPackages(packages: Set<String>) = viewModelScope.launch {
+        settingsStore.setShowOverPackages(packages)
+    }
+
     fun clearNotificationLog() = viewModelScope.launch { repository.clearNotificationLog() }
 
     companion object {

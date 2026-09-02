@@ -32,10 +32,23 @@ private val WATCHABLE_APPS = listOf(
     "com.samsung.android.messaging" to "Samsung Messages",
 )
 
+/** The apps the bubble can appear over — the ones you actually pay from. */
+private val PAYMENT_APPS = listOf(
+    PaymentApps.GPAY to "Google Pay",
+    PaymentApps.PHONEPE to "PhonePe",
+    PaymentApps.PAYTM to "Paytm",
+    PaymentApps.WHATSAPP to "WhatsApp",
+    PaymentApps.BHIM to "BHIM",
+    PaymentApps.CRED to "CRED",
+    PaymentApps.AMAZON to "Amazon",
+)
+
 @Composable
 fun SettingsScreen(
     settings: AppSettings,
     onToggleWatched: (String, Boolean) -> Unit,
+    onSetOnlyOverPaymentApps: (Boolean) -> Unit,
+    onToggleShowOver: (String, Boolean) -> Unit,
     onSetHaptics: (Boolean) -> Unit,
     onSetSizeStep: (Int) -> Unit,
     onSetCheckInHour: (Int) -> Unit,
@@ -65,6 +78,35 @@ fun SettingsScreen(
                             checked = checked,
                             onCheckedChange = { onToggleWatched(packageName, it) },
                         )
+                    }
+                }
+            }
+        }
+
+        item {
+            SectionCard(
+                title = "When to show the bubble",
+                subtitle = "Keep it off your screen except where it matters.",
+            ) {
+                Spacer(Modifier.height(8.dp))
+                LabelledRow(
+                    label = "Only over payment apps",
+                    description = "The bubble appears when you open one of the apps below, " +
+                        "and hides everywhere else. Needs Usage access.",
+                ) {
+                    Switch(
+                        checked = settings.onlyOverPaymentApps,
+                        onCheckedChange = onSetOnlyOverPaymentApps,
+                    )
+                }
+                if (settings.onlyOverPaymentApps) {
+                    PAYMENT_APPS.forEach { (packageName, label) ->
+                        LabelledRow(label = label) {
+                            Switch(
+                                checked = packageName in settings.showOverPackages,
+                                onCheckedChange = { onToggleShowOver(packageName, it) },
+                            )
+                        }
                     }
                 }
             }

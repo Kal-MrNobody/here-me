@@ -186,6 +186,9 @@ private fun HereMeRoot(reconcileRequested: MutableState<Boolean>) {
                 onIgnoreBatteryOptimisations = {
                     context.startActivity(Permissions.batteryOptimisationSettings(context))
                 },
+                onGrantUsageAccess = {
+                    context.startActivity(Permissions.usageAccessSettings())
+                },
                 onSeeAllHistory = { tab = Tab.HISTORY },
                 modifier = Modifier.padding(padding),
             )
@@ -213,6 +216,15 @@ private fun HereMeRoot(reconcileRequested: MutableState<Boolean>) {
                         settings.watchedPackages - packageName
                     }
                     viewModel.setWatchedPackages(updated)
+                },
+                onSetOnlyOverPaymentApps = viewModel::setOnlyOverPaymentApps,
+                onToggleShowOver = { packageName, show ->
+                    val updated = if (show) {
+                        settings.showOverPackages + packageName
+                    } else {
+                        settings.showOverPackages - packageName
+                    }
+                    viewModel.setShowOverPackages(updated)
                 },
                 onSetHaptics = viewModel::setHaptics,
                 onSetSizeStep = viewModel::setBubbleSizeStep,

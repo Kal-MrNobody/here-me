@@ -23,6 +23,10 @@ data class AppSettings(
     /** 0 = small, 1 = medium, 2 = large. */
     val bubbleSizeStep: Int = 1,
     val watchedPackages: Set<String> = PaymentApps.DEFAULT_WATCHED,
+    /** When true, the bubble is only shown while one of [showOverPackages] is in front. */
+    val onlyOverPaymentApps: Boolean = true,
+    /** The apps the bubble should appear over (the UPI apps, not the SMS app). */
+    val showOverPackages: Set<String> = PaymentApps.KNOWN,
     val hapticsEnabled: Boolean = true,
     val lowBalanceThreshold: Paise = Paise.ofRupees(500),
     val checkInHour: Int = 21,
@@ -49,6 +53,8 @@ class SettingsStore(context: Context) {
             bubbleY = prefs[BUBBLE_Y] ?: -1,
             bubbleSizeStep = prefs[BUBBLE_SIZE] ?: 1,
             watchedPackages = prefs[WATCHED] ?: PaymentApps.DEFAULT_WATCHED,
+            onlyOverPaymentApps = prefs[ONLY_OVER_PAYMENT_APPS] ?: true,
+            showOverPackages = prefs[SHOW_OVER] ?: PaymentApps.KNOWN,
             hapticsEnabled = prefs[HAPTICS] ?: true,
             lowBalanceThreshold = Paise(prefs[LOW_BALANCE] ?: Paise.ofRupees(500).raw),
             checkInHour = prefs[CHECK_IN_HOUR] ?: 21,
@@ -66,6 +72,10 @@ class SettingsStore(context: Context) {
     suspend fun setBubbleSizeStep(step: Int) = edit { it[BUBBLE_SIZE] = step.coerceIn(0, 2) }
 
     suspend fun setWatchedPackages(packages: Set<String>) = edit { it[WATCHED] = packages }
+
+    suspend fun setOnlyOverPaymentApps(only: Boolean) = edit { it[ONLY_OVER_PAYMENT_APPS] = only }
+
+    suspend fun setShowOverPackages(packages: Set<String>) = edit { it[SHOW_OVER] = packages }
 
     suspend fun setHapticsEnabled(enabled: Boolean) = edit { it[HAPTICS] = enabled }
 
@@ -85,6 +95,8 @@ class SettingsStore(context: Context) {
         val BUBBLE_Y = intPreferencesKey("bubble_y")
         val BUBBLE_SIZE = intPreferencesKey("bubble_size_step")
         val WATCHED = stringSetPreferencesKey("watched_packages")
+        val ONLY_OVER_PAYMENT_APPS = booleanPreferencesKey("only_over_payment_apps")
+        val SHOW_OVER = stringSetPreferencesKey("show_over_packages")
         val HAPTICS = booleanPreferencesKey("haptics_enabled")
         val LOW_BALANCE = longPreferencesKey("low_balance_paise")
         val CHECK_IN_HOUR = intPreferencesKey("check_in_hour")
